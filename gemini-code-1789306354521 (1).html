@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Candy Spin Party - Home Menu Edition</title>
+    <script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
+    <style>
+        :root {
+            --candy-pink: #ff3399;
+            --candy-yellow: #ffeb3b;
+            --candy-blue: #00bcd4;
+            --candy-purple: #9c27b0;
+            --bg-dark: #2c1654;
+            --panel-bg: rgba(74, 20, 140, 0.85);
+            --panel-border: rgba(255, 235, 59, 0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Comic Sans MS', 'Bubblegum Sans', 'Segoe UI', cursive, sans-serif; touch-action: manipulation; }
+        body { 
+            background: radial-gradient(circle at center, #4a148c 0%, #1a0b2e 100%); 
+            color: #fff; 
+            padding: 10px; 
+            user-select: none; 
+            overflow-x: hidden; 
+            min-height: 100vh;
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+            border-bottom: 4px dashed var(--candy-yellow); 
+            padding-bottom: 8px; 
+            max-width: 1450px; 
+            margin: 0 auto 10px auto; 
+        }
+        .header h1 { 
+            color: var(--candy-yellow); 
+            letter-spacing: 2px; 
+            font-size: 1.8rem; 
+            text-shadow: 3px 3px 0px #ff0055, 0 0 15px rgba(255, 235, 59, 0.8); 
+        }
+        .header-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        
+        .btn-header { 
+            background: #ff4081; 
+            border: 3px solid #fff; 
+            color: #fff; 
+            padding: 6px 14px; 
+            border-radius: 25px; 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            box-shadow: 0 4px 0 #c51162;
+        }
+        .btn-header:active { transform: translateY(3px); box-shadow: 0 1px 0 #c51162; }
+
+        .star-coin-display { 
+            font-size: 1.1rem; 
+            font-weight: 900; 
+            color: var(--candy-yellow); 
+            background: rgba(255, 235, 59, 0.2); 
+            border: 3px solid var(--candy-yellow); 
+            padding: 6px 16px; 
+            border-radius: 25px; 
+            box-shadow: 0 4px 15px rgba(255, 235, 59, 0.4); 
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .game-layout { 
+            display: grid; 
+            grid-template-columns: 320px 1fr 320px; 
+            gap: 12px; 
+            max-width: 1450px; 
+            margin: 0 auto; 
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .game-layout { grid-template-columns: 1fr; }
+        }
+
+        .side-panel {
+            background: var(--panel-bg); 
+            border: 3px solid var(--panel-border); 
+            border-radius: 24px; 
+            padding: 16px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6); 
+        }
+
+        #stage { 
+            position: relative; 
+            width: 100%; 
+            height: 600px; 
+            background: radial-gradient(circle at center, #673ab7 0%, #311b92 100%); 
+            border: 4px solid var(--candy-yellow); 
+            border-radius: 24px; 
+            overflow: hidden; 
+            box-shadow: 0 0 35px rgba(255, 235, 59, 0.4), inset 0 0 50px rgba(0,0,0,0.5); 
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .overlay { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(42, 13, 83, 0.95); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 100; 
+            text-align: center;
+            padding: 20px;
+        }
+        .overlay.hidden { display: none; }
+        .overlay h2 { font-size: 2.8rem; color: var(--candy-yellow); margin-bottom: 8px; text-shadow: 3px 3px 0px #ff0055; }
+        .overlay p { font-size: 1.1rem; color: #fff; margin-bottom: 20px; font-weight: bold; }
+        
+        .overlay-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        .btn-modal { padding: 12px 24px; font-size: 1.1rem; font-weight: 900; border: 3px solid #fff; border-radius: 30px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-replay { background: #00e676; color: #000; box-shadow: 0 5px 0 #00c853; }
+        .btn-ad { background: #ffea00; color: #000; box-shadow: 0 5px 0 #fbc02d; }
+        .btn-leave { background: #ab47bc; color: #fff; box-shadow: 0 5px 0 #7b1fa2; }
+        .btn-modal:active { transform: translateY(4px); box-shadow: 0 1px 0 #000; }
+
+        #home-menu-overlay, #choice-overlay, #upgrade-choice-overlay, #settings-overlay, #plot-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(26, 11, 46, 0.96);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 120;
+            text-align: center;
+            padding: 20px;
+        }
+        #home-menu-overlay.hidden, #choice-overlay.hidden, #upgrade-choice-overlay.hidden, #settings-overlay.hidden, #plot-overlay.hidden { display: none; }
+        
+        .home-menu-card {
+            background: rgba(74, 20, 140, 0.9);
+            border: 4px solid var(--candy-yellow);
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+        }
+        .home-menu-card h2 { font-size: 2.5rem; color: var(--candy-yellow); text-shadow: 3px 3px 0 #ff0055; margin-bottom: 5px; }
+        .btn-home-main {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            border: 3px solid #fff;
+            border-radius: 25px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.4);
+            transition: 0.1s;
+        }
+        .btn-home-main:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,0.4); }
+        .btn-play-game { background: #00e676; color: #000; }
+        .btn-menu-plot { background: #ff4081; color: #fff; }
+        .btn-menu-sound { background: #00bcd4; color: #fff; }
+        .btn-menu-exit { background: #f44336; color: #fff; box-shadow: 0 5px 0 #c62828; }
+
+        .choice-btns { display: flex; gap: 12px; margin-top: 15px; flex-wrap: wrap; justify-content: center; }
+        .btn-choice { padding: 12px 24px; font-size: 1.1rem; font-weight: 900; border: 3px solid #fff; border-radius: 20px; cursor: pointer; color: #fff; text-shadow: 1px 1px 0 #000; }
+        .btn-choice-stamina { background: #00e676; box-shadow: 0 5px 0 #00c853; }
+        .btn-choice-shield { background: #00bcd4; box-shadow: 0 5px 0 #00838f; }
+        .btn-choice:active { transform: translateY(4px); box-shadow: 0 1px 0 #000; }
+
+        .settings-group { margin: 8px 0; background: rgba(51, 0, 111, 0.9); padding: 10px; border-radius: 16px; border: 2px solid var(--candy-pink); width: 340px; max-width: 100%; text-align: left; }
+        .settings-group label { display: block; font-size: 0.82rem; color: var(--candy-yellow); font-weight: bold; margin-bottom: 5px; }
+        .color-options, .shape-options, .sound-options { display: flex; gap: 6px; justify-content: space-between; }
+        .color-swatch { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.4); }
+        .color-swatch.active { transform: scale(1.15); border-color: var(--candy-yellow); }
+        .shape-btn, .sound-btn { flex: 1; padding: 6px; font-size: 0.75rem; font-weight: bold; border: 2px solid #fff; border-radius: 12px; background: #673ab7; color: #fff; cursor: pointer; text-align: center; }
+        .shape-btn.active, .sound-btn.active { background: var(--candy-pink); border-color: var(--candy-yellow); }
+
+        #countdown-overlay { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            pointer-events: none; 
+            z-index: 90; 
+        }
+        #countdown-overlay.hidden { display: none; }
+        #countdown-text { 
+            font-size: 6rem; 
+            font-weight: 900; 
+            color: var(--candy-yellow); 
+            text-shadow: 4px 4px 0px #ff0055, 0 0 30px #fff; 
+            animation: bounce 0.6s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: scale(0.8); }
+            100% { transform: scale(1.2); }
+        }
+
+        .btn-launch { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #00e676, #00b0ff); 
+            color: #fff; 
+            font-size: 1.2rem; 
+            font-weight: 900; 
+            border: 4px solid #fff; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            box-shadow: 0 6px 0 #00796b; 
+            transition: all 0.1s ease; 
+        }
+        .btn-launch:active { transform: translateY(4px); box-shadow: 0 2px 0 #00796b; }
+
+        .status-box { background: rgba(51, 0, 111, 0.8); padding: 12px; border-radius: 16px; border: 2px solid var(--candy-pink); font-size: 0.9rem; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 6px; font-weight: bold; }
+        .bar { height: 14px; background: #1a0b2e; border-radius: 8px; overflow: hidden; margin-top: 4px; border: 2px solid #fff; }
+        .fill-p1 { height: 100%; background: linear-gradient(90deg, #ff4081, #ffeb3b); width: 100%; transition: width 0.1s; }
+        .fill-p2 { height: 100%; background: linear-gradient(90deg, #00e676, #00bcd4); width: 100%; transition: width 0.1s; }
+
+        .shop-box { background: rgba(51, 0, 111, 0.8); padding: 12px; border-radius: 16px; border: 2px solid var(--candy-yellow); }
+        .btn-upgrade { 
+            width: 100%; 
+            padding: 10px; 
+            background: #ff9800; 
+            border: 2px solid #fff; 
+            color: #fff; 
+            font-size: 0.82rem; 
+            font-weight: bold; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            margin-top: 6px; 
+            box-shadow: 0 3px 0 #e65100;
+            transition: 0.2s; 
+        }
+        .btn-upgrade:active { transform: translateY(2px); box-shadow: 0 1px 0 #e65100; }
+
+        .control-panel { background: rgba(51, 0, 111, 0.8); padding: 10px; border-radius: 16px; border: 2px solid var(--candy-blue); text-align: center; }
+        .dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 130px; margin: 6px auto 0 auto; }
+        .dbtn { width: 40px; height: 40px; background: #00bcd4; color: #fff; border: 2px solid #fff; font-size: 1.1rem; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #00838f; }
+        .dbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #00838f; background: #ffeb3b; color: #000; }
+        .empty { visibility: hidden; }
+        .control-legend { font-size: 0.75rem; color: var(--candy-yellow); margin-top: 6px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>🍭 CANDY ESCAPE BATTLE 🍬</h1>
+        <p style="color: var(--candy-yellow); font-size: 0.85rem; font-weight: bold;">Escape the Computer Attack!</p>
+    </div>
+    <div class="header-controls">
+        <button class="btn-header" onclick="goToHomeMenu()">🏠 HOME MENU</button>
+        <button class="btn-header" onclick="openSettingsMenu()">⚙️ SETTINGS</button>
+    </div>
+</div>
+
+<div class="game-layout">
+    <div class="side-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 0.85rem; color: var(--candy-pink); font-weight: bold;">YOUR HERO</p>
+            <div class="star-coin-display">⭐ <span id="val-coins">50</span></div>
+        </div>
+
+        <button class="btn-launch" onclick="launchBattle()">🎮 START ESCAPE!</button>
+
+        <div class="status-box">
+            <div style="text-align:center; font-weight:bold; font-size:0.9rem; margin-bottom:4px; color:var(--candy-yellow);" id="txt-status">ESCAPE THE BOT!</div>
+            <div class="bar-label"><span style="color:var(--candy-pink);">🍓 STRAWBERRY TOP</span> <span id="txt-p1-hp">100%</span></div>
+            <div class="bar"><div id="p1-hp" class="fill-p1"></div></div>
+            <div style="margin-top: 6px; font-size: 0.75rem; color: var(--candy-blue);">Shield Timer: <span id="txt-shield-time" style="font-weight:bold; color:#fff;">OFF</span></div>
+        </div>
+
+        <div class="shop-box">
+            <p style="font-size: 0.75rem; color: var(--candy-yellow); font-weight: bold; text-align: center;">ENERGY UPGRADES</p>
+            <button class="btn-upgrade" onclick="openUpgradeMenu()">⚡ SPEND STARS TO UPGRADE (25⭐)</button>
+        </div>
+
+        <div class="control-panel">
+            <p style="font-size: 0.75rem; color: #fff; font-weight: bold;">STEERING ESCAPE</p>
+            <div class="dpad">
+                <div class="empty"></div>
+                <button class="dbtn" ontouchstart="steer('up')" ontouchend="stopSteer('up')" onmousedown="steer('up')" onmouseup="stopSteer('up')">▲</button>
+                <div class="empty"></div>
+                <button class="dbtn" ontouchstart="steer('left')" ontouchend="stopSteer('left')" onmousedown="steer('left')" onmouseup="stopSteer('left')">◄</button>
+                <div class="empty"></div>
+                <button class="dbtn" ontouchstart="steer('right')" ontouchend="stopSteer('right')" onmousedown="steer('right')" onmouseup="stopSteer('right')">►</button>
+                <div class="empty"></div>
+                <button class="dbtn" ontouchstart="steer('down')" ontouchend="stopSteer('down')" onmousedown="steer('down')" onmouseup="stopSteer('down')">▼</button>
+                <div class="empty"></div>
+            </div>
+            <p class="control-legend">Run away from the computer!</p>
+        </div>
+    </div>
+
+    <div id="stage">
+        <canvas id="arena"></canvas>
+
+        <!-- Home Menu Attractive Screen -->
+        <div id="home-menu-overlay">
+            <div class="home-menu-card">
+                <h2>🍬 CANDY ARENA 🍭</h2>
+                <p style="color: var(--candy-yellow); font-size: 0.95rem;">Choose your destination in Sugar-Vania!</p>
+                <button class="btn-home-main btn-play-game" onclick="closeHomeMenuAndStart()">🎮 START GAME</button>
+                <button class="btn-home-main btn-menu-plot" onclick="openPlotMenu()">📜 GAME PLOT</button>
+                <button class="btn-home-main btn-menu-sound" onclick="openSettingsMenu()">🎵 CLASH SOUND SETTINGS</button>
+                <button class="btn-home-main btn-menu-exit" onclick="exitGameApp()">🚪 EXIT GAME</button>
+            </div>
+        </div>
+
+        <div id="choice-overlay" class="hidden">
+            <h2 style="color: var(--candy-yellow);">POWER BALL COLLECTED!</h2>
+            <p>Choose your power reward:</p>
+            <div class="choice-btns">
+                <button class="btn-choice btn-choice-stamina" onclick="chooseReward('stamina')">💖 +50 STAMINA</button>
+                <button class="btn-choice btn-choice-shield" onclick="chooseReward('shield')">🛡️ SHIELD / EXTEND</button>
+            </div>
+        </div>
+
+        <div id="upgrade-choice-overlay" class="hidden">
+            <h2 style="color: var(--candy-yellow);">ENERGY SHOP</h2>
+            <p>Spend 25 Star Coins to upgrade:</p>
+            <div class="choice-btns">
+                <button class="btn-choice btn-choice-stamina" onclick="buyUpgradeChoice('stamina')">💖 MAX STAMINA +30</button>
+                <button class="btn-choice btn-choice-shield" onclick="buyUpgradeChoice('shield')">🛡️ SHIELD / EXTEND TIME</button>
+            </div>
+            <button class="btn-modal btn-leave" style="margin-top: 20px;" onclick="closeUpgradeMenu()">❌ BACK</button>
+        </div>
+
+        <div id="plot-overlay" class="hidden">
+            <h2 style="color: var(--candy-yellow);">📜 GAME PLOT</h2>
+            <div style="background: rgba(51, 0, 111, 0.9); padding: 15px; border-radius: 16px; border: 2px solid var(--candy-pink); max-width: 500px; margin: 10px 0; text-align: left; font-size: 0.95rem; line-height: 1.5;">
+                <p>In the vibrant kingdom of <b>Sugar-Vania</b>, the rogue <b>Blueberry Bot</b> has gone haywire! Driven by faulty programming, it is hunting down all spinning tops to drain their candy stamina.</p>
+                <p style="margin-top: 10px;">You control the agile <b>Strawberry Top</b> champion. Dodge the bot's fierce onslaught, collect glowing power balls for crucial tactical choices, and outlast the computer to preserve sweet freedom!</p>
+            </div>
+            <button class="btn-modal btn-replay" style="margin-top: 10px;" onclick="closePlotMenu()">✔️ BACK</button>
+        </div>
+
+        <div id="settings-overlay" class="hidden">
+            <h2 style="color: var(--candy-yellow);">CLASH SOUND SETTINGS</h2>
+            
+            <div class="settings-group">
+                <label>🔊 Clash Sound FX (When Tops Clash)</label>
+                <div class="sound-options">
+                    <button class="sound-btn active" id="snd-1" onclick="setClashSound(1)">1. Default</button>
+                    <button class="sound-btn" id="snd-2" onclick="setClashSound(2)">2. High Ting</button>
+                    <button class="sound-btn" id="snd-3" onclick="setClashSound(3)">3. Piano Clash</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>🏟️ Arena Shape</label>
+                <div class="shape-options">
+                    <button class="shape-btn active" id="shape-circle" onclick="setArenaShape('circle')">Circle</button>
+                    <button class="shape-btn" id="shape-ellipse" onclick="setArenaShape('ellipse')">Ellipse</button>
+                    <button class="shape-btn" id="shape-square" onclick="setArenaShape('square')">Square</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>🔵 Power Ball Colour</label>
+                <div class="color-options">
+                    <div class="color-swatch active" style="background: #00bcd4;" onclick="setPowerColor('#00bcd4', this)"></div>
+                    <div class="color-swatch" style="background: #ffeb3b;" onclick="setPowerColor('#ffeb3b', this)"></div>
+                    <div class="color-swatch" style="background: #00e676;" onclick="setPowerColor('#00e676', this)"></div>
+                    <div class="color-swatch" style="background: #ff3399;" onclick="setPowerColor('#ff3399', this)"></div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>🍓 Player Spinning Top Colour</label>
+                <div class="color-options">
+                    <div class="color-swatch active" style="background: #ff3399;" onclick="setPlayerColor('#ff3399', this)"></div>
+                    <div class="color-swatch" style="background: #9c27b0;" onclick="setPlayerColor('#9c27b0', this)"></div>
+                    <div class="color-swatch" style="background: #ff9800;" onclick="setPlayerColor('#ff9800', this)"></div>
+                    <div class="color-swatch" style="background: #00bcd4;" onclick="setPlayerColor('#00bcd4', this)"></div>
+                </div>
+            </div>
+
+            <button class="btn-modal btn-replay" style="margin-top: 10px;" onclick="closeSettingsMenu()">✔️ SAVE & CLOSE</button>
+        </div>
+
+        <div id="countdown-overlay" class="hidden">
+            <div id="countdown-text">3</div>
+        </div>
+
+        <div id="game-overlay" class="overlay hidden">
+            <h2 id="modal-title" style="color: var(--candy-yellow);">PLAYER WIN!</h2>
+            <p id="modal-reward">+30 STAR COINS EARNED!</p>
+            <div class="overlay-btns">
+                <button class="btn-modal btn-replay" onclick="replayGame()">🔄 PLAY AGAIN</button>
+                <button class="btn-modal btn-ad" onclick="watchRewardedAd()">🎬 WATCH AD FOR +50 ⭐</button>
+                <button class="btn-modal btn-leave" onclick="goToHomeMenu()">🏠 HOME MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <p style="font-size: 0.85rem; color: var(--candy-blue); font-weight: bold;">ATTACKER COMPUTER</p>
+        </div>
+
+        <div class="status-box">
+            <div style="text-align:center; font-weight:bold; font-size:0.9rem; margin-bottom:4px; color:var(--candy-blue);">BLUEBERRY BOT</div>
+            <div class="bar-label"><span style="color:var(--candy-blue);">🫐 COMPUTER TOP</span> <span id="txt-p2-hp">100%</span></div>
+            <div class="bar"><div id="p2-hp" class="fill-p2"></div></div>
+            <div style="margin-top: 8px; font-size: 0.75rem; color: var(--candy-yellow); text-align: center;">
+                Status: <span id="txt-ai-state" style="color: #fff; font-weight: bold;">HUNTING</span>
+            </div>
+        </div>
+
+        <div class="control-panel" style="margin-top: 10px;">
+            <p style="font-size: 0.75rem; color: var(--candy-yellow); font-weight: bold;">OBJECTIVE</p>
+            <p style="font-size: 0.7rem; color: #fff; margin-top: 6px; line-height: 1.4;">
+                Escape the computer's attacks! Grab random power balls for Stamina or Shield choices before they vanish!
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pokiReady = false;
+    PokiSDK.init().then(() => {
+        pokiReady = true;
+        PokiSDK.gameLoadingFinished();
+    }).catch(() => { 
+        pokiReady = false; 
+        try { PokiSDK.gameLoadingFinished(); } catch(e) {}
+    });
+
+    const canvas = document.getElementById('arena');
+    const ctx = canvas.getContext('2d');
+
+    const VIRTUAL_WIDTH = 1000;
+    const VIRTUAL_HEIGHT = 600;
+
+    function resize() {
+        canvas.width = VIRTUAL_WIDTH;
+        canvas.height = VIRTUAL_HEIGHT;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const safeStorage = {
+        getItem(key) {
+            try { return localStorage.getItem(key); } catch(e) { return null; }
+        },
+        setItem(key, val) {
+            try { localStorage.setItem(key, val); } catch(e) {}
+        }
+    };
+
+    let audioCtx = null;
+    let selectedClashSound = 1; 
+    let arenaShape = 'circle'; 
+    let powerBallColor = '#00bcd4';
+    let playerTopColor = '#ff3399';
+    const computerTopColor = '#00e676';
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function setClashSound(soundNum) {
+        selectedClashSound = soundNum;
+        [1, 2, 3].forEach(n => {
+            document.getElementById(`snd-${n}`).classList.toggle('active', n === soundNum);
+        });
+        playSound('clash');
+    }
+
+    function setArenaShape(shape) {
+        arenaShape = shape;
+        ['circle', 'ellipse', 'square'].forEach(s => {
+            document.getElementById(`shape-${s}`).classList.toggle('active', s === shape);
+        });
+    }
+
+    function setPowerColor(color, element) {
+        powerBallColor = color;
+        element.parentElement.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function setPlayerColor(color, element) {
+        playerTopColor = color;
+        element.parentElement.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function openSettingsMenu() {
+        document.getElementById('settings-overlay').classList.remove('hidden');
+    }
+    function closeSettingsMenu() {
+        document.getElementById('settings-overlay').classList.add('hidden');
+    }
+
+    function openPlotMenu() {
+        document.getElementById('plot-overlay').classList.remove('hidden');
+    }
+    function closePlotMenu() {
+        document.getElementById('plot-overlay').classList.add('hidden');
+    }
+
+    function exitGameApp() {
+        if (pokiReady) {
+            // If integrated with a platform SDK or browser context that supports redirect/close
+            try {
+                if (typeof PokiSDK.redirectToHome === 'function') {
+                    PokiSDK.redirectToHome();
+                    return;
+                }
+            } catch(e) {}
+        }
+        
+        // Fallback action for general standalone web use when exit is clicked
+        if (confirm("Are you sure you want to leave the game?")) {
+            window.close();
+            // If window.close() is blocked by browser policies, redirect to a safe blank/exit screen or reload home state
+            document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a0b2e;color:#ffeb3b;text-align:center;font-family:sans-serif;">
+                    <h1 style="font-size:2.5rem;margin-bottom:15px;">👋 Thanks for Playing!</h1>
+                    <p style="color:#fff;font-size:1.2rem;">You have successfully exited the game session.</p>
+                    <button onclick="location.reload()" style="margin-top:25px;padding:12px 24px;font-size:1rem;font-weight:bold;background:#00e676;color:#000;border:3px solid #fff;border-radius:20px;cursor:pointer;">Play Again</button>
+                </div>
+            `;
+        }
+    }
+
+    function goToHomeMenu() {
+        if (isBattling && pokiReady) PokiSDK.gameplayStop();
+        isBattling = false;
+        isCountingDown = false;
+        isChoosing = false;
+        document.getElementById('game-overlay').classList.add('hidden');
+        document.getElementById('countdown-overlay').classList.add('hidden');
+        document.getElementById('choice-overlay').classList.add('hidden');
+        document.getElementById('upgrade-choice-overlay').classList.add('hidden');
+        document.getElementById('settings-overlay').classList.add('hidden');
+        document.getElementById('plot-overlay').classList.add('hidden');
+        document.getElementById('home-menu-overlay').classList.remove('hidden');
+    }
+
+    function closeHomeMenuAndStart() {
+        document.getElementById('home-menu-overlay').classList.add('hidden');
+        launchBattle();
+    }
+
+    function resumeAudio() { 
+        initAudio();
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume(); 
+        }
+    }
+    window.addEventListener('click', resumeAudio, { once: true });
+    window.addEventListener('touchstart', resumeAudio, { once: true });
+
+    function playSound(type) {
+        if (!audioCtx || audioCtx.state !== 'running') return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+
+        if (type === 'beep') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+        } else if (type === 'go') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(659.25, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'clash') {
+            if (selectedClashSound === 1) {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(415.3, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (selectedClashSound === 2) {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1320, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (selectedClashSound === 3) {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(261.63, audioCtx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            }
+        } else if (type === 'powerup') {
+            osc.type = 'sine'; osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.25);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        } else if (type === 'win') {
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+    }
+
+    let isBattling = false;
+    let isCountingDown = false;
+    let isChoosing = false;
+    let playerCoins = 50;
+    let maxStaminaP1 = 300; 
+    let shieldDurationBonus = 0;
+
+    let angleP1 = 0, angleP2 = 0;
+    const activeKeys = { up: false, down: false, left: false, right: false };
+    let popups = [];
+    let powerBalls = [];
+    let powerBallSpawnTimer = 180;
+    let screenShake = 0;
+
+    const p1 = { 
+        x: 300, y: 300, vx: 0, vy: 0, radius: 28, stamina: 300, maxStamina: 300, 
+        shieldActive: false, shieldTimer: 0 
+    };
+    const p2 = { 
+        x: 700, y: 300, vx: 0, vy: 0, radius: 28, stamina: 300, maxStamina: 300 
+    };
+
+    function loadPlayerData() {
+        const savedCoins = safeStorage.getItem('csp_coins');
+        const savedStamina = safeStorage.getItem('csp_stamina');
+        const savedShieldBonus = safeStorage.getItem('csp_shield_bonus');
+        if (savedCoins !== null) playerCoins = parseInt(savedCoins);
+        if (savedStamina !== null) maxStaminaP1 = parseInt(savedStamina);
+        if (savedShieldBonus !== null) shieldDurationBonus = parseInt(savedShieldBonus);
+        updateCoinUI();
+    }
+
+    function savePlayerData() {
+        safeStorage.setItem('csp_coins', playerCoins);
+        safeStorage.setItem('csp_stamina', maxStaminaP1);
+        safeStorage.setItem('csp_shield_bonus', shieldDurationBonus);
+    }
+
+    function updateCoinUI() { document.getElementById('val-coins').innerText = playerCoins; }
+
+    function addFloatingText(text, x, y, color) {
+        popups.push({ text: text, x: x, y: y, vy: -1.5, alpha: 1.0, color: color });
+    }
+
+    function spawnPowerBall() {
+        const centerX = VIRTUAL_WIDTH / 2;
+        const centerY = VIRTUAL_HEIGHT / 2;
+        const offset = 220;
+        const px = centerX + (Math.random() - 0.5) * offset * 2;
+        const py = centerY + (Math.random() - 0.5) * offset * 2;
+        powerBalls.push({ x: px, y: py, radius: 18, life: 300, pulse: 0 });
+    }
+
+    function openUpgradeMenu() {
+        document.getElementById('upgrade-choice-overlay').classList.remove('hidden');
+    }
+
+    function closeUpgradeMenu() {
+        document.getElementById('upgrade-choice-overlay').classList.add('hidden');
+    }
+
+    function buyUpgradeChoice(type) {
+        if (playerCoins >= 25) {
+            playerCoins -= 25;
+            if (type === 'stamina') {
+                maxStaminaP1 += 30;
+                addFloatingText("MAX STAMINA +30!", VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, '#00e676');
+            } else if (type === 'shield') {
+                if (p1.shieldActive) {
+                    p1.shieldTimer += 180;
+                }
+                shieldDurationBonus += 120;
+                addFloatingText("SHIELD TIME UP!", VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, '#00bcd4');
+            }
+            savePlayerData();
+            updateCoinUI();
+            closeUpgradeMenu();
+        } else {
+            alert("Not enough Star Coins! Win matches to earn more stars.");
+        }
+    }
+
+    function launchBattle() {
+        document.getElementById('game-overlay').classList.add('hidden');
+        document.getElementById('upgrade-choice-overlay').classList.add('hidden');
+        document.getElementById('settings-overlay').classList.add('hidden');
+        document.getElementById('plot-overlay').classList.add('hidden');
+        document.getElementById('home-menu-overlay').classList.add('hidden');
+
+        p1.x = VIRTUAL_WIDTH / 2 - 200; p1.y = VIRTUAL_HEIGHT / 2;
+        p1.vx = 0; p1.vy = 0;
+        p1.maxStamina = maxStaminaP1;
+        p1.stamina = maxStaminaP1; 
+        p1.shieldActive = false;
+        p1.shieldTimer = 0;
+
+        p2.x = VIRTUAL_WIDTH / 2 + 200; p2.y = VIRTUAL_HEIGHT / 2;
+        p2.vx = 0; p2.vy = 0;
+        p2.maxStamina = 300;
+        p2.stamina = 300; 
+
+        popups = [];
+        powerBalls = [];
+        powerBallSpawnTimer = 150;
+
+        startCountdown();
+    }
+
+    function startCountdown() {
+        isCountingDown = true;
+        const overlay = document.getElementById('countdown-overlay');
+        const text = document.getElementById('countdown-text');
+        overlay.classList.remove('hidden');
+
+        let count = 3;
+        text.innerText = count;
+        playSound('beep');
+
+        const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                text.innerText = count;
+                playSound('beep');
+            } else if (count === 0) {
+                text.innerText = "GO!";
+                playSound('go');
+            } else {
+                clearInterval(timer);
+                overlay.classList.add('hidden');
+                isCountingDown = false;
+                startMatch();
+            }
+        }, 800);
+    }
+
+    function startMatch() {
+        isBattling = true;
+        if (pokiReady) PokiSDK.gameplayStart();
+        document.getElementById('txt-status').innerText = "ESCAPE THE ATTACK!";
+    }
+
+    function watchRewardedAd() {
+        if (pokiReady) {
+            PokiSDK.rewardedBreak(() => {}).then((success) => {
+                if (success) {
+                    playerCoins += 50; 
+                    savePlayerData(); 
+                    updateCoinUI();
+                    addFloatingText("+50 STAR COINS!", VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, '#ffeb3b');
+                }
+            });
+        } else {
+            playerCoins += 50; 
+            savePlayerData(); 
+            updateCoinUI();
+            addFloatingText("+50 STAR COINS!", VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, '#ffeb3b');
+        }
+    }
+
+    function replayGame() {
+        if (pokiReady) {
+            PokiSDK.commercialBreak(() => {}).then(() => {
+                launchBattle();
+            });
+        } else {
+            launchBattle();
+        }
+    }
+
+    function steer(dir) { activeKeys[dir] = true; }
+    function stopSteer(dir) { activeKeys[dir] = false; }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w') activeKeys.up = true;
+        if (e.key === 'ArrowDown' || e.key === 's') activeKeys.down = true;
+        if (e.key === 'ArrowLeft' || e.key === 'a') activeKeys.left = true;
+        if (e.key === 'ArrowRight' || e.key === 'd') activeKeys.right = true;
+        if (e.key === 'Escape' && isBattling) goToHomeMenu();
+    });
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w') activeKeys.up = false;
+        if (e.key === 'ArrowDown' || e.key === 's') activeKeys.down = false;
+        if (e.key === 'ArrowLeft' || e.key === 'a') activeKeys.left = false;
+        if (e.key === 'ArrowRight' || e.key === 'd') activeKeys.right = false;
+    });
+
+    function chooseReward(type) {
+        isChoosing = false;
+        document.getElementById('choice-overlay').classList.add('hidden');
+        if (type === 'stamina') {
+            p1.stamina = Math.min(p1.maxStamina, p1.stamina + 50);
+            addFloatingText("+50 STAMINA!", p1.x, p1.y - 20, '#00e676');
+        } else if (type === 'shield') {
+            if (p1.shieldActive) {
+                p1.shieldTimer += 300 + shieldDurationBonus;
+                addFloatingText("SHIELD EXTENDED!", p1.x, p1.y - 20, '#00bcd4');
+            } else {
+                p1.shieldActive = true;
+                p1.shieldTimer = 300 + shieldDurationBonus;
+                addFloatingText("SHIELD ACTIVE!", p1.x, p1.y - 20, '#00bcd4');
+            }
+        }
+    }
+
+    function updateAI() {
+        if (!isBattling || isChoosing) return;
+
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (dist > 1) {
+            p2.vx += (dx / dist) * 0.08;
+            p2.vy += (dy / dist) * 0.08;
+        }
+    }
+
+    function updateGame() {
+        if (!isBattling || isChoosing) return;
+
+        updateAI();
+
+        p1.stamina -= 0.05;
+        p2.stamina -= 0.05;
+
+        if (p1.shieldTimer > 0) {
+            p1.shieldTimer--;
+            if (p1.shieldTimer <= 0) p1.shieldActive = false;
+        }
+
+        let steerForce = 0.4;
+        if (activeKeys.up) p1.vy -= steerForce;
+        if (activeKeys.down) p1.vy += steerForce;
+        if (activeKeys.left) p1.vx -= steerForce;
+        if (activeKeys.right) p1.vx += steerForce;
+
+        p1.vx *= 0.98; p1.vy *= 0.98;
+        p2.vx *= 0.98; p2.vy *= 0.98;
+
+        p1.x += p1.vx; p1.y += p1.vy;
+        p2.x += p2.vx; p2.y += p2.vy;
+
+        const arenaCenterX = VIRTUAL_WIDTH / 2;
+        const arenaCenterY = VIRTUAL_HEIGHT / 2;
+
+        [p1, p2].forEach(p => {
+            if (arenaShape === 'circle') {
+                const arenaRadius = Math.min(VIRTUAL_WIDTH, VIRTUAL_HEIGHT) * 0.42;
+                const distFromCenter = Math.hypot(p.x - arenaCenterX, p.y - arenaCenterY);
+                if (distFromCenter > arenaRadius - p.radius) {
+                    const angle = Math.atan2(p.y - arenaCenterY, p.x - arenaCenterX);
+                    p.x = arenaCenterX + Math.cos(angle) * (arenaRadius - p.radius);
+                    p.y = arenaCenterY + Math.sin(angle) * (arenaRadius - p.radius);
+                    p.vx *= -0.7; p.vy *= -0.7;
+                }
+            } else if (arenaShape === 'ellipse') {
+                const rx = VIRTUAL_WIDTH * 0.42;
+                const ry = VIRTUAL_HEIGHT * 0.35;
+                const nx = (p.x - arenaCenterX) / rx;
+                const ny = (p.y - arenaCenterY) / ry;
+                if (nx*nx + ny*ny > 1) {
+                    const angle = Math.atan2(p.y - arenaCenterY, p.x - arenaCenterX);
+                    p.x = arenaCenterX + Math.cos(angle) * (rx - p.radius);
+                    p.y = arenaCenterY + Math.sin(angle) * (ry - p.radius);
+                    p.vx *= -0.7; p.vy *= -0.7;
+                }
+            } else if (arenaShape === 'square') {
+                const halfW = 380;
+                const halfH = 240;
+                if (p.x < arenaCenterX - halfW + p.radius) { p.x = arenaCenterX - halfW + p.radius; p.vx *= -0.7; }
+                if (p.x > arenaCenterX + halfW - p.radius) { p.x = arenaCenterX + halfW - p.radius; p.vx *= -0.7; }
+                if (p.y < arenaCenterY - halfH + p.radius) { p.y = arenaCenterY - halfH + p.radius; p.vy *= -0.7; }
+                if (p.y > arenaCenterY + halfH - p.radius) { p.y = arenaCenterY + halfH - p.radius; p.vy *= -0.7; }
+            }
+        });
+
+        const collisionDx = p2.x - p1.x;
+        const collisionDy = p2.y - p1.y;
+        const collisionDist = Math.hypot(collisionDx, collisionDy);
+        const minDistance = p1.radius + p2.radius;
+
+        if (collisionDist < minDistance) {
+            playSound('clash');
+            screenShake = 6;
+            if (p1.shieldActive) {
+                p2.stamina -= 3;
+                addFloatingText("BLOCKED!", p1.x, p1.y - 20, '#00bcd4');
+            } else {
+                p1.stamina -= 1.8; 
+                addFloatingText("POWER ATTACK!", p1.x, p1.y - 20, '#ff3399');
+            }
+        }
+
+        powerBallSpawnTimer--;
+        if (powerBallSpawnTimer <= 0 && powerBalls.length < 2) {
+            spawnPowerBall();
+            powerBallSpawnTimer = 200 + Math.random() * 100;
+        }
+
+        powerBalls.forEach((bb, index) => {
+            bb.life--;
+            bb.pulse += 0.1;
+            if (bb.life <= 0) {
+                powerBalls.splice(index, 1);
+                return;
+            }
+            
+            const distToPlayer = Math.hypot(p1.x - bb.x, p1.y - bb.y);
+            if (distToPlayer < p1.radius + bb.radius) {
+                playSound('powerup');
+                powerBalls.splice(index, 1);
+                isChoosing = true;
+                document.getElementById('choice-overlay').classList.remove('hidden');
+                return;
+            }
+
+            const distToBot = Math.hypot(p2.x - bb.x, p2.y - bb.y);
+            if (distToBot < p2.radius + bb.radius) {
+                powerBalls.splice(index, 1);
+                p2.stamina = Math.min(p2.maxStamina, p2.stamina + 25);
+                addFloatingText("+BOT BONUS!", p2.x, p2.y - 20, computerTopColor);
+            }
+        });
+
+        document.getElementById('p1-hp').style.width = Math.max(0, (p1.stamina / p1.maxStamina) * 100) + '%';
+        document.getElementById('txt-p1-hp').innerText = Math.max(0, Math.floor((p1.stamina / p1.maxStamina) * 100)) + '%';
+        
+        document.getElementById('p2-hp').style.width = Math.max(0, (p2.stamina / p2.maxStamina) * 100) + '%';
+        document.getElementById('txt-p2-hp').innerText = Math.max(0, Math.floor((p2.stamina / p2.maxStamina) * 100)) + '%';
+
+        document.getElementById('txt-shield-time').innerText = p1.shieldActive ? Math.ceil(p1.shieldTimer / 60) + 's' : 'OFF';
+
+        if (p1.stamina <= 0) {
+            endMatch(false); 
+        } else if (p2.stamina <= 0) {
+            endMatch(true); 
+        }
+    }
+
+    function endMatch(playerWon) {
+        isBattling = false;
+        if (pokiReady) PokiSDK.gameplayStop();
+
+        playSound('win');
+        const overlay = document.getElementById('game-overlay');
+        const title = document.getElementById('modal-title');
+        const rewardText = document.getElementById('modal-reward');
+
+        overlay.classList.remove('hidden');
+
+        if (playerWon) {
+            title.innerText = "PLAYER WIN!";
+            title.style.color = "var(--candy-yellow)";
+            playerCoins += 30;
+            rewardText.innerText = "+30 STAR COINS EARNED!";
+        } else {
+            title.innerText = "COMPUTER WIN!";
+            title.style.color = "var(--candy-pink)";
+            rewardText.innerText = "The computer caught you! Try again!";
+        }
+        savePlayerData();
+        updateCoinUI();
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+
+        ctx.save();
+        if (screenShake > 0) {
+            const shakeX = (Math.random() - 0.5) * screenShake;
+            const shakeY = (Math.random() - 0.5) * screenShake;
+            ctx.translate(shakeX, shakeY);
+            screenShake *= 0.9;
+            if (screenShake < 0.5) screenShake = 0;
+        }
+
+        const centerX = VIRTUAL_WIDTH / 2;
+        const centerY = VIRTUAL_HEIGHT / 2;
+
+        ctx.beginPath();
+        if (arenaShape === 'circle') {
+            const arenaRadius = Math.min(VIRTUAL_WIDTH, VIRTUAL_HEIGHT) * 0.42;
+            ctx.arc(centerX, centerY, arenaRadius, 0, Math.PI * 2);
+        } else if (arenaShape === 'ellipse') {
+            ctx.ellipse(centerX, centerY, VIRTUAL_WIDTH * 0.42, VIRTUAL_HEIGHT * 0.35, 0, 0, Math.PI * 2);
+        } else if (arenaShape === 'square') {
+            ctx.rect(centerX - 380, centerY - 240, 760, 480);
+        }
+        ctx.fillStyle = 'rgba(74, 20, 140, 0.7)';
+        ctx.fill();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = '#ffeb3b';
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = '#ff3399';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        powerBalls.forEach(bb => {
+            ctx.save();
+            ctx.translate(bb.x, bb.y);
+            ctx.beginPath();
+            ctx.arc(0, 0, bb.radius + Math.sin(bb.pulse) * 3, 0, Math.PI * 2);
+            ctx.fillStyle = powerBallColor;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = powerBallColor;
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            ctx.restore();
+        });
+
+        angleP1 += 0.35;
+        angleP2 += 0.35;
+
+        ctx.save();
+        ctx.translate(p1.x, p1.y);
+        ctx.rotate(angleP1);
+        ctx.beginPath();
+        ctx.arc(0, 0, p1.radius, 0, Math.PI * 2);
+        ctx.fillStyle = playerTopColor;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = playerTopColor;
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#ffeb3b';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.restore();
+
+        if (p1.shieldActive) {
+            ctx.beginPath();
+            ctx.arc(p1.x, p1.y, p1.radius + 8, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00bcd4';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        ctx.save();
+        ctx.translate(p2.x, p2.y);
+        ctx.rotate(angleP2);
+        ctx.beginPath();
+        ctx.arc(0, 0, p2.radius, 0, Math.PI * 2);
+        ctx.fillStyle = computerTopColor;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = computerTopColor;
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#ffeb3b';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.restore();
+
+        popups.forEach((pop, i) => {
+            pop.y += pop.vy;
+            pop.alpha -= 0.02;
+            if (pop.alpha <= 0) {
+                popups.splice(i, 1);
+                return;
+            }
+            ctx.font = 'bold 16px Comic Sans MS, cursive';
+            ctx.fillStyle = pop.color;
+            ctx.globalAlpha = pop.alpha;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = pop.color;
+            ctx.fillText(pop.text, pop.x - 45, pop.y);
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1.0;
+        });
+
+        ctx.restore();
+    }
+
+    function gameLoop() {
+        updateGame(); 
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    loadPlayerData();
+    requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
